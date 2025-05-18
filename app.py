@@ -8,10 +8,24 @@ import os
 import json
 from datetime import datetime
 from fastapi.responses import JSONResponse
+import logging
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 app = FastAPI(title="Text Categorization API")
 categorizer = TextCategorizer()
 metrics = ModelMetrics()
+
+# Load the model when the app starts
+try:
+    categorizer.load_model()
+    logging.info("Model loaded successfully on startup")
+except Exception as e:
+    logging.warning(f"Could not load model on startup: {str(e)}")
 
 class PredictionRequest(BaseModel):
     texts: List[str]
@@ -20,15 +34,18 @@ class PredictionResponse(BaseModel):
     predictions: List[dict]
 
 class MetricsResponse(BaseModel):
-    latest: Dict[str, Any]
-    history: List[Dict[str, Any]]
+    accuracy: float
+    macro_avg_f1: float
+    category_metrics: Dict[str, Dict[str, float]]
 
 class MetricsPlotResponse(BaseModel):
     confusion_matrix: str
-    metrics_history: str
+    accuracy_history: str
+    f1_history: str
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(request: PredictionRequest):
+    """Predict categories for the given texts."""
     try:
         if not request.texts:
             raise HTTPException(
@@ -36,22 +53,42 @@ async def predict(request: PredictionRequest):
                 detail="No texts provided in the request"
             )
             
-        if not os.path.exists('model.joblib'):
+        model_path = os.path.join('data/models', 'model.joblib')
+        vectorizer_path = os.path.join('data/models', 'vectorizer.joblib')
+        
+        if not os.path.exists(model_path) or not os.path.exists(vectorizer_path):
             raise HTTPException(
                 status_code=400,
                 detail="Model not trained yet. Please train the model first using train.py"
             )
             
-        predictions = categorizer.predict(request.texts)
-        return PredictionResponse(predictions=predictions)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        try:
+            predictions = categorizer.predict(request.texts)
+            logging.info(f"Successfully predicted categories for {len(request.texts)} texts")
+            return PredictionResponse(predictions=predictions)
+        except ValueError as e:
+            logging.error(f"Value error during prediction: {str(e)}")
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            logging.error(f"Error during prediction: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error during prediction: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Unexpected error in predict endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(e)}"
+        )
 
 @app.get("/health")
 async def health_check():
-    model_status = "trained" if os.path.exists('model.joblib') else "not trained"
+    model_path = os.path.join('data/models', 'model.joblib')
+    model_status = "trained" if os.path.exists(model_path) else "not trained"
     return {
         "status": "healthy",
         "model_status": model_status
@@ -59,77 +96,77 @@ async def health_check():
 
 @app.get("/metrics", response_model=MetricsResponse)
 async def get_metrics():
+    """Get the latest model metrics."""
     try:
-        # Get latest metrics
+        metrics = ModelMetrics()
         latest_metrics = metrics.get_latest_metrics()
         
-        # Get metrics history
-        metrics_dir = 'data/metrics'
-        history = []
-        
-        if os.path.exists(metrics_dir):
-            for timestamp_dir in sorted(os.listdir(metrics_dir), reverse=True):
-                metrics_file = os.path.join(metrics_dir, timestamp_dir, 'metrics.json')
-                if os.path.exists(metrics_file):
-                    with open(metrics_file, 'r') as f:
-                        history.append({
-                            'timestamp': timestamp_dir,
-                            'metrics': json.load(f)
-                        })
-        
-        # Get confusion matrix if available
-        confusion_matrix = None
-        if latest_metrics and 'confusion_matrix' in latest_metrics:
-            confusion_matrix = latest_metrics['confusion_matrix']
-        
-        # Get category-wise metrics if available
-        category_metrics = None
-        if latest_metrics and 'category_metrics' in latest_metrics:
-            category_metrics = latest_metrics['category_metrics']
-        
-        response = {
-            'latest': {
-                'accuracy': latest_metrics.get('accuracy', 0.0),
-                'macro_avg_f1': latest_metrics.get('macro_avg_f1', 0.0),
-                'timestamp': latest_metrics.get('timestamp', ''),
-                'confusion_matrix': confusion_matrix,
-                'category_metrics': category_metrics
-            },
-            'history': history
+        if not latest_metrics:
+            raise HTTPException(
+                status_code=404,
+                detail="No metrics available. Train the model first."
+            )
+            
+        return {
+            "accuracy": latest_metrics["accuracy"],
+            "macro_avg_f1": latest_metrics["macro_avg_f1"],
+            "category_metrics": latest_metrics["category_metrics"]
         }
-        
-        return response
-    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Error getting metrics: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving metrics: {str(e)}"
+        )
 
 @app.get("/metrics/plot", response_model=MetricsPlotResponse)
 async def get_metrics_plot():
+    """Get the latest metrics visualization plots."""
     try:
-        # Generate and save plots
-        metrics.plot_confusion_matrix()
-        metrics.plot_metrics_history()
+        metrics = ModelMetrics()
+        latest_metrics = metrics.get_latest_metrics()
         
-        # Get the paths to the generated plots
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        confusion_matrix_path = f'data/metrics/{timestamp}/confusion_matrix.png'
-        metrics_history_path = f'data/metrics/{timestamp}/metrics_history.png'
-        
-        # Check if plots were generated
-        if not os.path.exists(confusion_matrix_path) or not os.path.exists(metrics_history_path):
+        if not latest_metrics:
             raise HTTPException(
                 status_code=404,
-                detail="Metrics plots not available"
+                detail="No metrics available. Train the model first."
             )
+            
+        # Get the directory containing the latest metrics
+        metrics_dirs = sorted(os.listdir(metrics.metrics_dir), reverse=True)
+        if not metrics_dirs:
+            raise HTTPException(
+                status_code=404,
+                detail="No metrics plots available."
+            )
+            
+        latest_dir = metrics_dirs[0]
+        metrics_dir = os.path.join(metrics.metrics_dir, latest_dir)
         
-        # Return the paths to the plots
+        # Check for plot files
+        confusion_matrix_path = os.path.join(metrics_dir, 'confusion_matrix.png')
+        accuracy_history_path = os.path.join(metrics_dir, 'accuracy_history.png')
+        f1_history_path = os.path.join(metrics_dir, 'f1_history.png')
+        
+        if not all(os.path.exists(p) for p in [confusion_matrix_path, accuracy_history_path, f1_history_path]):
+            raise HTTPException(
+                status_code=404,
+                detail="Some metrics plots are missing."
+            )
+            
         return {
-            'confusion_matrix': confusion_matrix_path,
-            'metrics_history': metrics_history_path
+            "confusion_matrix": confusion_matrix_path,
+            "accuracy_history": accuracy_history_path,
+            "f1_history": f1_history_path
         }
-    
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Error getting metrics plots: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving metrics plots: {str(e)}"
+        )
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=3040, reload=True) 

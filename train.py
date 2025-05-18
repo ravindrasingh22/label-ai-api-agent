@@ -1,11 +1,13 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, f1_score
 from model import TextCategorizer
 from model_metrics import ModelMetrics
 from model_versioning import ModelVersioning
 import os
 import logging
 import sys
+import numpy as np
 
 # Set up logging
 logging.basicConfig(
@@ -27,7 +29,8 @@ def train_model(training_file: str, test_size: float = 0.2, random_state: int = 
     """
     try:
         # Check if model already exists
-        if os.path.exists('model.joblib'):
+        model_path = os.path.join('data/models', 'model.joblib')
+        if os.path.exists(model_path):
             logging.info("Model already exists. Skipping training.")
             return
         
@@ -66,22 +69,35 @@ def train_model(training_file: str, test_size: float = 0.2, random_state: int = 
         accuracy = sum(y_pred == y_test) / len(y_test)
         logging.info(f"Model accuracy: {accuracy:.2f}")
         
+        # Calculate F1 score
+        macro_avg_f1 = f1_score(y_test, y_pred, average='macro')
+        logging.info(f"Macro-averaged F1 score: {macro_avg_f1:.2f}")
+        
+        # Calculate confusion matrix
+        cm = confusion_matrix(y_test, y_pred)
+        logging.info("Confusion matrix calculated")
+        
         # Save metrics
         metrics.save_metrics(
-            accuracy=accuracy,
-            macro_avg_f1=0.0,  # TODO: Implement F1 score calculation
-            confusion_matrix=None  # TODO: Implement confusion matrix
+            y_true=y_test,
+            y_pred=y_pred,
+            categories=df['category'].unique()
         )
+        
+        # Generate plots
+        metrics.plot_confusion_matrix(cm, df['category'].unique(), metrics.metrics_dir)
+        metrics.plot_metrics_history(metrics.get_latest_metrics(), metrics.metrics_dir)
         
         # Save model version
         versioning.save_model_version(
-            model_path='model.joblib',
+            model_path=model_path,
             metadata={
                 'training_file': training_file,
                 'num_samples': len(df),
                 'test_size': test_size,
                 'random_state': random_state,
-                'accuracy': accuracy
+                'accuracy': accuracy,
+                'macro_avg_f1': macro_avg_f1
             }
         )
         

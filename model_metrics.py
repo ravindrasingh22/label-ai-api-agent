@@ -19,174 +19,163 @@ class ModelMetrics:
             os.makedirs(self.metrics_dir)
             
     def save_metrics(self, y_true, y_pred, categories, model_name='model'):
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Calculate metrics
-        report = classification_report(y_true, y_pred, output_dict=True)
-        conf_matrix = confusion_matrix(y_true, y_pred)
-        
-        # Save classification report
-        report_path = os.path.join(self.metrics_dir, f'{model_name}_report_{timestamp}.json')
-        with open(report_path, 'w') as f:
-            json.dump(report, f, indent=4)
-            
-        # Save confusion matrix plot
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
-                   xticklabels=categories, yticklabels=categories)
-        plt.title('Confusion Matrix')
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
-        plt.tight_layout()
-        
-        matrix_path = os.path.join(self.metrics_dir, f'{model_name}_confusion_matrix_{timestamp}.png')
-        plt.savefig(matrix_path)
-        plt.close()
-        
-        # Save metrics summary
-        metrics_summary = {
-            'timestamp': timestamp,
-            'model_name': model_name,
-            'accuracy': report['accuracy'],
-            'macro_avg_precision': report['macro avg']['precision'],
-            'macro_avg_recall': report['macro avg']['recall'],
-            'macro_avg_f1': report['macro avg']['f1-score'],
-            'categories': categories,
-            'confusion_matrix_path': matrix_path,
-            'report_path': report_path
-        }
-        
-        summary_path = os.path.join(self.metrics_dir, f'{model_name}_summary_{timestamp}.json')
-        with open(summary_path, 'w') as f:
-            json.dump(metrics_summary, f, indent=4)
-            
-        return metrics_summary
-    
-    def get_latest_metrics(self, model_name='model'):
-        """Get the latest metrics for a model"""
-        pattern = os.path.join(self.metrics_dir, f'{model_name}_summary_*.json')
-        files = glob.glob(pattern)
-        if not files:
-            return None
-            
-        latest_file = max(files, key=os.path.getctime)
-        with open(latest_file, 'r') as f:
-            return json.load(f)
-            
-    def plot_metrics_history(self, model_name='model', metric='accuracy'):
-        """Plot the history of a specific metric"""
-        pattern = os.path.join(self.metrics_dir, f'{model_name}_summary_*.json')
-        files = glob.glob(pattern)
-        
-        if not files:
-            return None
-            
-        metrics_history = []
-        for file in sorted(files):
-            with open(file, 'r') as f:
-                data = json.load(f)
-                metrics_history.append({
-                    'timestamp': data['timestamp'],
-                    metric: data[metric]
-                })
-                
-        df = pd.DataFrame(metrics_history)
-        df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y%m%d_%H%M%S')
-        
-        plt.figure(figsize=(10, 6))
-        plt.plot(df['timestamp'], df[metric])
-        plt.title(f'{metric.capitalize()} Over Time')
-        plt.xlabel('Time')
-        plt.ylabel(metric.capitalize())
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        
-        plot_path = os.path.join(self.metrics_dir, f'{model_name}_{metric}_history.png')
-        plt.savefig(plot_path)
-        plt.close()
-        
-        return plot_path
-    
-    def plot_confusion_matrix(self, y_true=None, y_pred=None, labels=None):
         """
-        Plot confusion matrix.
+        Save model metrics and generate visualizations.
         
         Args:
-            y_true (array-like, optional): True labels
-            y_pred (array-like, optional): Predicted labels
-            labels (list, optional): Label names
+            y_true: True labels
+            y_pred: Predicted labels
+            categories: List of category names
+            model_name: Name of the model
         """
         try:
-            # Get latest metrics if no data provided
-            if y_true is None or y_pred is None:
-                latest_metrics = self.get_latest_metrics()
-                if latest_metrics and 'confusion_matrix' in latest_metrics:
-                    cm = np.array(latest_metrics['confusion_matrix'])
-                else:
-                    logging.warning("No confusion matrix data available")
-                    return
-            else:
-                cm = confusion_matrix(y_true, y_pred)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            metrics_dir = os.path.join(self.metrics_dir, timestamp)
+            os.makedirs(metrics_dir, exist_ok=True)
             
-            # Create plot
+            # Calculate metrics
+            report = classification_report(y_true, y_pred, output_dict=True)
+            conf_matrix = confusion_matrix(y_true, y_pred)
+            
+            # Save metrics data
+            metrics_data = {
+                'timestamp': timestamp,
+                'model_name': model_name,
+                'accuracy': report['accuracy'],
+                'macro_avg_precision': report['macro avg']['precision'],
+                'macro_avg_recall': report['macro avg']['recall'],
+                'macro_avg_f1': report['macro avg']['f1-score'],
+                'categories': categories,
+                'confusion_matrix': conf_matrix.tolist(),
+                'category_metrics': {
+                    cat: {
+                        'precision': report[cat]['precision'],
+                        'recall': report[cat]['recall'],
+                        'f1-score': report[cat]['f1-score']
+                    }
+                    for cat in categories
+                }
+            }
+            
+            # Save metrics to JSON
+            metrics_file = os.path.join(metrics_dir, 'metrics.json')
+            with open(metrics_file, 'w') as f:
+                json.dump(metrics_data, f, indent=2)
+            
+            # Generate and save plots
+            self.plot_confusion_matrix(conf_matrix, categories, metrics_dir)
+            self.plot_metrics_history(metrics_data, metrics_dir)
+            
+            return metrics_data
+            
+        except Exception as e:
+            logging.error(f"Error saving metrics: {str(e)}")
+            raise
+            
+    def get_latest_metrics(self):
+        """Get the most recent metrics."""
+        try:
+            if not os.path.exists(self.metrics_dir):
+                return None
+                
+            metrics_dirs = sorted(os.listdir(self.metrics_dir), reverse=True)
+            if not metrics_dirs:
+                return None
+                
+            latest_dir = metrics_dirs[0]
+            metrics_file = os.path.join(self.metrics_dir, latest_dir, 'metrics.json')
+            
+            if os.path.exists(metrics_file):
+                with open(metrics_file, 'r') as f:
+                    return json.load(f)
+            return None
+            
+        except Exception as e:
+            logging.error(f"Error getting latest metrics: {str(e)}")
+            return None
+    
+    def plot_confusion_matrix(self, conf_matrix, categories, metrics_dir):
+        """
+        Plot and save confusion matrix.
+        
+        Args:
+            conf_matrix: Confusion matrix array
+            categories: List of category names
+            metrics_dir: Directory to save the plot
+        """
+        try:
             plt.figure(figsize=(10, 8))
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+            sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
+                       xticklabels=categories, yticklabels=categories)
             plt.title('Confusion Matrix')
             plt.ylabel('True Label')
             plt.xlabel('Predicted Label')
+            plt.tight_layout()
             
-            # Save plot
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            plot_dir = os.path.join(self.metrics_dir, timestamp)
-            os.makedirs(plot_dir, exist_ok=True)
-            plt.savefig(os.path.join(plot_dir, 'confusion_matrix.png'))
+            plot_path = os.path.join(metrics_dir, 'confusion_matrix.png')
+            plt.savefig(plot_path)
             plt.close()
             
         except Exception as e:
             logging.error(f"Error plotting confusion matrix: {str(e)}")
             raise
     
-    def plot_metrics_history(self, metric='accuracy'):
+    def plot_metrics_history(self, metrics_data, metrics_dir):
         """
-        Plot metrics history over time.
+        Plot and save metrics history.
         
         Args:
-            metric (str): Metric to plot ('accuracy' or 'macro_avg_f1')
+            metrics_data: Current metrics data
+            metrics_dir: Directory to save the plot
         """
         try:
-            # Get all metrics
-            metrics_data = []
+            # Get all metrics history
+            metrics_history = []
             for timestamp_dir in sorted(os.listdir(self.metrics_dir)):
                 metrics_file = os.path.join(self.metrics_dir, timestamp_dir, 'metrics.json')
                 if os.path.exists(metrics_file):
                     with open(metrics_file, 'r') as f:
                         data = json.load(f)
-                        metrics_data.append({
+                        metrics_history.append({
                             'timestamp': data['timestamp'],
-                            'value': data[metric]
+                            'accuracy': data['accuracy'],
+                            'macro_avg_f1': data['macro_avg_f1']
                         })
             
-            if not metrics_data:
-                logging.warning(f"No {metric} data available")
+            if not metrics_history:
                 return
             
-            # Create plot
+            # Plot accuracy history
             plt.figure(figsize=(10, 6))
-            timestamps = [m['timestamp'] for m in metrics_data]
-            values = [m['value'] for m in metrics_data]
+            timestamps = [m['timestamp'] for m in metrics_history]
+            accuracy_values = [m['accuracy'] for m in metrics_history]
             
-            plt.plot(timestamps, values, marker='o')
-            plt.title(f'{metric.capitalize()} Over Time')
+            plt.plot(timestamps, accuracy_values, marker='o', label='Accuracy')
+            plt.title('Model Accuracy Over Time')
             plt.xlabel('Timestamp')
-            plt.ylabel(metric.capitalize())
+            plt.ylabel('Accuracy')
             plt.xticks(rotation=45)
+            plt.legend()
             plt.tight_layout()
             
-            # Save plot
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            plot_dir = os.path.join(self.metrics_dir, timestamp)
-            os.makedirs(plot_dir, exist_ok=True)
-            plt.savefig(os.path.join(plot_dir, 'metrics_history.png'))
+            accuracy_plot_path = os.path.join(metrics_dir, 'accuracy_history.png')
+            plt.savefig(accuracy_plot_path)
+            plt.close()
+            
+            # Plot F1 score history
+            plt.figure(figsize=(10, 6))
+            f1_values = [m['macro_avg_f1'] for m in metrics_history]
+            
+            plt.plot(timestamps, f1_values, marker='o', label='F1 Score')
+            plt.title('Model F1 Score Over Time')
+            plt.xlabel('Timestamp')
+            plt.ylabel('F1 Score')
+            plt.xticks(rotation=45)
+            plt.legend()
+            plt.tight_layout()
+            
+            f1_plot_path = os.path.join(metrics_dir, 'f1_history.png')
+            plt.savefig(f1_plot_path)
             plt.close()
             
         except Exception as e:
