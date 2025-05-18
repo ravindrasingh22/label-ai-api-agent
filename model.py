@@ -59,7 +59,7 @@ class TextCategorizer:
             if not hasattr(self, 'classifier') or not hasattr(self, 'vectorizer'):
                 self.load_model()
                 
-            if not texts:
+            if isinstance(texts, pd.Series) and texts.empty:
                 raise ValueError("No texts provided for prediction")
                 
             # Convert input to numpy array for consistent handling

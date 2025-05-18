@@ -28,12 +28,6 @@ def train_model(training_file: str, test_size: float = 0.2, random_state: int = 
         random_state (int): Random seed for reproducibility
     """
     try:
-        # Check if model already exists
-        model_path = os.path.join('data/models', 'model.joblib')
-        if os.path.exists(model_path):
-            logging.info("Model already exists. Skipping training.")
-            return
-        
         # Initialize components
         model = TextCategorizer()
         metrics = ModelMetrics()
