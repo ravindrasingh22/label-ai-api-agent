@@ -37,21 +37,26 @@ class ModelMetrics:
             report = classification_report(y_true, y_pred, output_dict=True)
             conf_matrix = confusion_matrix(y_true, y_pred)
             
+            # Convert numpy arrays to lists
+            y_true = y_true.tolist() if hasattr(y_true, 'tolist') else list(y_true)
+            y_pred = y_pred.tolist() if hasattr(y_pred, 'tolist') else list(y_pred)
+            conf_matrix = conf_matrix.tolist()
+            
             # Save metrics data
             metrics_data = {
                 'timestamp': timestamp,
                 'model_name': model_name,
-                'accuracy': report['accuracy'],
-                'macro_avg_precision': report['macro avg']['precision'],
-                'macro_avg_recall': report['macro avg']['recall'],
-                'macro_avg_f1': report['macro avg']['f1-score'],
-                'categories': categories,
-                'confusion_matrix': conf_matrix.tolist(),
+                'accuracy': float(report['accuracy']),  # Convert numpy float to Python float
+                'macro_avg_precision': float(report['macro avg']['precision']),
+                'macro_avg_recall': float(report['macro avg']['recall']),
+                'macro_avg_f1': float(report['macro avg']['f1-score']),
+                'categories': categories.tolist() if hasattr(categories, 'tolist') else list(categories),
+                'confusion_matrix': conf_matrix,
                 'category_metrics': {
                     cat: {
-                        'precision': report[cat]['precision'],
-                        'recall': report[cat]['recall'],
-                        'f1-score': report[cat]['f1-score']
+                        'precision': float(report.get(cat, {}).get('precision', 0.0)),
+                        'recall': float(report.get(cat, {}).get('recall', 0.0)),
+                        'f1-score': float(report.get(cat, {}).get('f1-score', 0.0))
                     }
                     for cat in categories
                 }
@@ -134,15 +139,30 @@ class ModelMetrics:
             for timestamp_dir in sorted(os.listdir(self.metrics_dir)):
                 metrics_file = os.path.join(self.metrics_dir, timestamp_dir, 'metrics.json')
                 if os.path.exists(metrics_file):
-                    with open(metrics_file, 'r') as f:
-                        data = json.load(f)
-                        metrics_history.append({
-                            'timestamp': data['timestamp'],
-                            'accuracy': data['accuracy'],
-                            'macro_avg_f1': data['macro_avg_f1']
-                        })
+                    try:
+                        with open(metrics_file, 'r') as f:
+                            data = json.load(f)
+                            metrics_history.append({
+                                'timestamp': data['timestamp'],
+                                'accuracy': data['accuracy'],
+                                'macro_avg_f1': data['macro_avg_f1']
+                            })
+                    except json.JSONDecodeError as e:
+                        logging.warning(f"Could not read metrics file {metrics_file}: {str(e)}")
+                        continue
+                    except KeyError as e:
+                        logging.warning(f"Missing required field in metrics file {metrics_file}: {str(e)}")
+                        continue
+            
+            # Add current metrics to history
+            metrics_history.append({
+                'timestamp': metrics_data['timestamp'],
+                'accuracy': metrics_data['accuracy'],
+                'macro_avg_f1': metrics_data['macro_avg_f1']
+            })
             
             if not metrics_history:
+                logging.warning("No metrics history available for plotting")
                 return
             
             # Plot accuracy history
@@ -180,4 +200,5 @@ class ModelMetrics:
             
         except Exception as e:
             logging.error(f"Error plotting metrics history: {str(e)}")
-            raise 
+            # Don't raise the error, just log it and continue
+            return 

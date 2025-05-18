@@ -59,7 +59,8 @@ def train_model(training_file: str, test_size: float = 0.2, random_state: int = 
         
         # Evaluate model
         logging.info("Evaluating model...")
-        y_pred = model.predict(X_test)
+        predictions = model.predict(X_test)
+        y_pred = [pred['predicted_category'] for pred in predictions]
         accuracy = sum(y_pred == y_test) / len(y_test)
         logging.info(f"Model accuracy: {accuracy:.2f}")
         
@@ -81,6 +82,9 @@ def train_model(training_file: str, test_size: float = 0.2, random_state: int = 
         # Generate plots
         metrics.plot_confusion_matrix(cm, df['category'].unique(), metrics.metrics_dir)
         metrics.plot_metrics_history(metrics.get_latest_metrics(), metrics.metrics_dir)
+        
+        # Define model path for versioning
+        model_path = os.path.join('data/models', 'model.joblib')
         
         # Save model version
         versioning.save_model_version(
