@@ -1,4 +1,4 @@
-# Text Categorization API
+# Text Categorization AI - API
 
 This project provides a text categorization service that can classify text inputs into predefined categories. It uses a machine learning model based on TF-IDF vectorization and Naive Bayes classification.
 
