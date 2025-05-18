@@ -42,6 +42,11 @@ data/metrics/
 *.model
 *.bin
 
+# Documentation
+docs/
+*.md
+!README.md
+
 # Logs
 *.log
 logs/

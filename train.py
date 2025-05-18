@@ -1,88 +1,100 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from model import TextCategorizer
-import argparse
-import sys
 from model_metrics import ModelMetrics
 from model_versioning import ModelVersioning
+import os
 import logging
+import sys
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 
-def train_model(input_file):
+def train_model(training_file: str, test_size: float = 0.2, random_state: int = 42):
     """
-    Train the model using data from a CSV file
-    Expected CSV format: text,category
+    Train the text categorization model.
+    
+    Args:
+        training_file (str): Path to the training data file
+        test_size (float): Proportion of data to use for testing
+        random_state (int): Random seed for reproducibility
     """
     try:
-        # Initialize metrics and versioning
+        # Check if model already exists
+        if os.path.exists('model.joblib'):
+            logging.info("Model already exists. Skipping training.")
+            return
+        
+        # Initialize components
+        model = TextCategorizer()
         metrics = ModelMetrics()
         versioning = ModelVersioning()
         
-        # Read the training data
-        df = pd.read_csv(input_file)
-        
-        # Validate the data
+        # Load and validate training data
+        logging.info(f"Loading training data from {training_file}")
+        if not os.path.exists(training_file):
+            raise FileNotFoundError(f"Training file not found: {training_file}")
+            
+        df = pd.read_csv(training_file)
         if df.empty:
-            logging.error("Error: Training data file is empty")
-            sys.exit(1)
+            raise ValueError("Training data is empty")
             
         if 'text' not in df.columns or 'category' not in df.columns:
-            logging.error("Error: CSV file must contain 'text' and 'category' columns")
-            sys.exit(1)
-            
-        # Remove any rows with missing values
-        df = df.dropna()
+            raise ValueError("Training data must contain 'text' and 'category' columns")
         
-        if df.empty:
-            logging.error("Error: No valid training data after removing missing values")
-            sys.exit(1)
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(
+            df['text'],
+            df['category'],
+            test_size=test_size,
+            random_state=random_state
+        )
         
-        # Initialize and train the model
-        categorizer = TextCategorizer()
-        categorizer.train(df['text'].values, df['category'].values)
+        # Train model
+        logging.info("Training model...")
+        model.train(X_train, y_train)
         
-        # Get predictions for metrics
-        predictions = categorizer.model.predict(df['text'].values)
+        # Evaluate model
+        logging.info("Evaluating model...")
+        y_pred = model.predict(X_test)
+        accuracy = sum(y_pred == y_test) / len(y_test)
+        logging.info(f"Model accuracy: {accuracy:.2f}")
         
         # Save metrics
-        categories = df['category'].unique()
-        metrics_summary = metrics.save_metrics(
-            df['category'].values,
-            predictions,
-            categories
+        metrics.save_metrics(
+            accuracy=accuracy,
+            macro_avg_f1=0.0,  # TODO: Implement F1 score calculation
+            confusion_matrix=None  # TODO: Implement confusion matrix
         )
         
         # Save model version
-        version_info = versioning.save_model_version(
-            'model.joblib',
+        versioning.save_model_version(
+            model_path='model.joblib',
             metadata={
-                'training_file': input_file,
-                'metrics': metrics_summary,
+                'training_file': training_file,
                 'num_samples': len(df),
-                'categories': list(categories)
+                'test_size': test_size,
+                'random_state': random_state,
+                'accuracy': accuracy
             }
         )
         
-        logging.info(f"Model trained and saved successfully!")
-        logging.info(f"Model version: {version_info['version']}")
-        logging.info(f"Accuracy: {metrics_summary['accuracy']:.4f}")
-        
-        # Generate metrics plots
-        metrics.plot_metrics_history(metric='accuracy')
-        metrics.plot_metrics_history(metric='macro_avg_f1')
+        logging.info("Training completed successfully")
         
     except Exception as e:
         logging.error(f"Error during training: {str(e)}")
-        sys.exit(1)
+        raise
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train the text categorization model')
-    parser.add_argument('input_file', help='Path to the CSV file containing training data')
-    args = parser.parse_args()
-    
-    train_model(args.input_file) 
+    if len(sys.argv) < 2:
+        print("Usage: python train.py <training_file>")
+        sys.exit(1)
+        
+    training_file = sys.argv[1]
+    train_model(training_file) 

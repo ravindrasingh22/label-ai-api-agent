@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import glob
+import logging
 
 class ModelMetrics:
     def __init__(self, metrics_dir='data/metrics'):
@@ -104,4 +105,90 @@ class ModelMetrics:
         plt.savefig(plot_path)
         plt.close()
         
-        return plot_path 
+        return plot_path
+    
+    def plot_confusion_matrix(self, y_true=None, y_pred=None, labels=None):
+        """
+        Plot confusion matrix.
+        
+        Args:
+            y_true (array-like, optional): True labels
+            y_pred (array-like, optional): Predicted labels
+            labels (list, optional): Label names
+        """
+        try:
+            # Get latest metrics if no data provided
+            if y_true is None or y_pred is None:
+                latest_metrics = self.get_latest_metrics()
+                if latest_metrics and 'confusion_matrix' in latest_metrics:
+                    cm = np.array(latest_metrics['confusion_matrix'])
+                else:
+                    logging.warning("No confusion matrix data available")
+                    return
+            else:
+                cm = confusion_matrix(y_true, y_pred)
+            
+            # Create plot
+            plt.figure(figsize=(10, 8))
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+            plt.title('Confusion Matrix')
+            plt.ylabel('True Label')
+            plt.xlabel('Predicted Label')
+            
+            # Save plot
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            plot_dir = os.path.join(self.metrics_dir, timestamp)
+            os.makedirs(plot_dir, exist_ok=True)
+            plt.savefig(os.path.join(plot_dir, 'confusion_matrix.png'))
+            plt.close()
+            
+        except Exception as e:
+            logging.error(f"Error plotting confusion matrix: {str(e)}")
+            raise
+    
+    def plot_metrics_history(self, metric='accuracy'):
+        """
+        Plot metrics history over time.
+        
+        Args:
+            metric (str): Metric to plot ('accuracy' or 'macro_avg_f1')
+        """
+        try:
+            # Get all metrics
+            metrics_data = []
+            for timestamp_dir in sorted(os.listdir(self.metrics_dir)):
+                metrics_file = os.path.join(self.metrics_dir, timestamp_dir, 'metrics.json')
+                if os.path.exists(metrics_file):
+                    with open(metrics_file, 'r') as f:
+                        data = json.load(f)
+                        metrics_data.append({
+                            'timestamp': data['timestamp'],
+                            'value': data[metric]
+                        })
+            
+            if not metrics_data:
+                logging.warning(f"No {metric} data available")
+                return
+            
+            # Create plot
+            plt.figure(figsize=(10, 6))
+            timestamps = [m['timestamp'] for m in metrics_data]
+            values = [m['value'] for m in metrics_data]
+            
+            plt.plot(timestamps, values, marker='o')
+            plt.title(f'{metric.capitalize()} Over Time')
+            plt.xlabel('Timestamp')
+            plt.ylabel(metric.capitalize())
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            
+            # Save plot
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            plot_dir = os.path.join(self.metrics_dir, timestamp)
+            os.makedirs(plot_dir, exist_ok=True)
+            plt.savefig(os.path.join(plot_dir, 'metrics_history.png'))
+            plt.close()
+            
+        except Exception as e:
+            logging.error(f"Error plotting metrics history: {str(e)}")
+            raise 
