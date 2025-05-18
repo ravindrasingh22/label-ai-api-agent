@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  text-categorizer:
+    container_name: cat-ai
+    build: .
+    ports:
+      - "3040:3040"
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "python watch_and_train.py & python app.py" 

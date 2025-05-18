@@ -1,0 +1,321 @@
+text,category
+"Payment received for invoice #INV-2024-001",payment_received
+"Outstanding balance for invoice #INV-2024-002",payment_pending
+"Payment overdue for invoice #INV-2024-003",payment_overdue
+"Partial payment received for invoice #INV-2024-004",partial_payment
+"Payment confirmation for invoice #INV-2024-005",payment_confirmation
+"Request for invoice payment extension",payment_extension
+"Payment reminder for invoice #INV-2024-006",payment_reminder
+"Payment dispute for invoice #INV-2024-007",payment_dispute
+"Payment refund request for invoice #INV-2024-008",payment_refund
+"Payment adjustment needed for invoice #INV-2024-009",payment_adjustment
+"New invoice generated for client ABC Corp",invoice_generation
+"Invoice template update required",invoice_template
+"Invoice number format change request",invoice_format
+"Invoice approval pending from manager",invoice_approval
+"Invoice revision needed for project XYZ",invoice_revision
+"Invoice cancellation request",invoice_cancellation
+"Invoice duplicate found",invoice_duplicate
+"Invoice status update required",invoice_status
+"Invoice export to PDF failed",invoice_export
+"Invoice import from Excel",invoice_import
+"Tax calculation error in invoice",tax_issue
+"VAT amount incorrect in invoice",tax_issue
+"GST calculation needs review",tax_issue
+"Tax exemption certificate required",tax_issue
+"Tax ID verification needed",tax_issue
+"Tax rate update required",tax_issue
+"Tax return filing reminder",tax_issue
+"Tax audit request received",tax_issue
+"Tax compliance check needed",tax_issue
+"Tax documentation required",tax_issue
+"Client credit limit exceeded",credit_management
+"Credit application pending review",credit_management
+"Credit terms modification request",credit_management
+"Credit check required for new client",credit_management
+"Credit limit increase request",credit_management
+"Credit hold placed on account",credit_management
+"Credit release authorization needed",credit_management
+"Credit risk assessment required",credit_management
+"Credit policy update needed",credit_management
+"Credit report generation",credit_management
+"Discount request for bulk order",discount_management
+"Early payment discount available",discount_management
+"Seasonal discount application",discount_management
+"Loyalty discount calculation",discount_management
+"Volume discount eligibility check",discount_management
+"Discount code validation",discount_management
+"Discount policy update",discount_management
+"Discount approval required",discount_management
+"Discount calculation error",discount_management
+"Discount terms negotiation",discount_management
+"Bank account details update",banking
+"Bank transfer confirmation",banking
+"Bank reconciliation needed",banking
+"Bank statement request",banking
+"Bank account verification",banking
+"Bank charges dispute",banking
+"Bank routing number update",banking
+"Bank account closure request",banking
+"Bank account opening process",banking
+"Bank transfer failed",banking
+"Customer account update needed",customer_management
+"Customer information verification",customer_management
+"Customer address change request",customer_management
+"Customer contact update",customer_management
+"Customer account closure",customer_management
+"Customer account reactivation",customer_management
+"Customer profile update",customer_management
+"Customer preferences update",customer_management
+"Customer feedback received",customer_management
+"Customer complaint resolution",customer_management
+"Product pricing update required",pricing
+"Price list revision needed",pricing
+"Competitive pricing analysis",pricing
+"Price increase notification",pricing
+"Price match request",pricing
+"Price quote generation",pricing
+"Price negotiation needed",pricing
+"Price structure update",pricing
+"Price approval required",pricing
+"Price calculation error",pricing
+"Shipping address update",shipping
+"Delivery confirmation needed",shipping
+"Shipping cost calculation",shipping
+"Shipping method change",shipping
+"Shipping label generation",shipping
+"Shipping tracking update",shipping
+"Shipping delay notification",shipping
+"Shipping damage report",shipping
+"Shipping insurance claim",shipping
+"Shipping return request",shipping
+"Contract renewal reminder",contract_management
+"Contract terms update",contract_management
+"Contract approval pending",contract_management
+"Contract termination request",contract_management
+"Contract violation notice",contract_management
+"Contract extension needed",contract_management
+"Contract review required",contract_management
+"Contract signing pending",contract_management
+"Contract template update",contract_management
+"Contract compliance check",contract_management
+"Expense report submission",expense_management
+"Expense approval needed",expense_management
+"Expense reimbursement request",expense_management
+"Expense policy update",expense_management
+"Expense category update",expense_management
+"Expense report revision",expense_management
+"Expense documentation needed",expense_management
+"Expense limit exceeded",expense_management
+"Expense audit required",expense_management
+"Expense report export",expense_management
+"Financial report generation",financial_reporting
+"Balance sheet update",financial_reporting
+"Profit and loss statement",financial_reporting
+"Cash flow analysis needed",financial_reporting
+"Financial forecast update",financial_reporting
+"Budget variance report",financial_reporting
+"Financial statement audit",financial_reporting
+"Financial data export",financial_reporting
+"Financial metrics calculation",financial_reporting
+"Financial year end report",financial_reporting
+"System maintenance required",system_maintenance
+"Database backup needed",system_maintenance
+"Software update required",system_maintenance
+"System performance issue",system_maintenance
+"Security patch installation",system_maintenance
+"System configuration update",system_maintenance
+"Data migration needed",system_maintenance
+"System integration issue",system_maintenance
+"API connection problem",system_maintenance
+"System downtime scheduled",system_maintenance
+"Compliance audit required",compliance
+"Regulatory reporting needed",compliance
+"Policy compliance check",compliance
+"Compliance documentation update",compliance
+"Compliance training required",compliance
+"Compliance violation report",compliance
+"Compliance review needed",compliance
+"Compliance certification update",compliance
+"Compliance risk assessment",compliance
+"Compliance policy update",compliance
+"Vendor payment processing",vendor_management
+"Vendor registration needed",vendor_management
+"Vendor information update",vendor_management
+"Vendor contract renewal",vendor_management
+"Vendor performance review",vendor_management
+"Vendor payment dispute",vendor_management
+"Vendor invoice approval",vendor_management
+"Vendor relationship management",vendor_management
+"Vendor compliance check",vendor_management
+"Vendor payment terms update",vendor_management
+"Project cost tracking",project_management
+"Project budget update",project_management
+"Project milestone payment",project_management
+"Project expense approval",project_management
+"Project cost overrun",project_management
+"Project financial report",project_management
+"Project budget revision",project_management
+"Project cost allocation",project_management
+"Project financial forecast",project_management
+"Project cost analysis",project_management
+"Asset depreciation calculation",asset_management
+"Asset purchase approval",asset_management
+"Asset maintenance schedule",asset_management
+"Asset disposal request",asset_management
+"Asset valuation needed",asset_management
+"Asset inventory update",asset_management
+"Asset insurance renewal",asset_management
+"Asset transfer request",asset_management
+"Asset documentation update",asset_management
+"Asset audit required",asset_management
+"Payroll processing needed",payroll
+"Salary calculation error",payroll
+"Payroll tax update",payroll
+"Employee benefits calculation",payroll
+"Payroll report generation",payroll
+"Payroll deduction update",payroll
+"Payroll approval required",payroll
+"Payroll system update",payroll
+"Payroll compliance check",payroll
+"Payroll documentation needed",payroll
+"Insurance claim processing",insurance
+"Insurance policy renewal",insurance
+"Insurance coverage update",insurance
+"Insurance premium calculation",insurance
+"Insurance claim approval",insurance
+"Insurance documentation needed",insurance
+"Insurance policy review",insurance
+"Insurance compliance check",insurance
+"Insurance risk assessment",insurance
+"Insurance claim settlement",insurance
+"Audit trail review needed",audit
+"Internal audit required",audit
+"Audit report generation",audit
+"Audit finding resolution",audit
+"Audit documentation update",audit
+"Audit compliance check",audit
+"Audit risk assessment",audit
+"Audit schedule update",audit
+"Audit team assignment",audit
+"Audit scope definition",audit
+"Documentation update needed",documentation
+"Document version control",documentation
+"Document approval required",documentation
+"Document storage update",documentation
+"Document retention policy",documentation
+"Document access control",documentation
+"Document template update",documentation
+"Document workflow update",documentation
+"Document compliance check",documentation
+"Document security review",documentation
+"Workflow approval pending",workflow
+"Workflow process update",workflow
+"Workflow automation needed",workflow
+"Workflow efficiency review",workflow
+"Workflow documentation update",workflow
+"Workflow compliance check",workflow
+"Workflow optimization needed",workflow
+"Workflow integration required",workflow
+"Workflow monitoring needed",workflow
+"Workflow reporting required",workflow
+"Data backup required",data_management
+"Data recovery needed",data_management
+"Data migration scheduled",data_management
+"Data security update",data_management
+"Data privacy compliance",data_management
+"Data retention policy",data_management
+"Data access control",data_management
+"Data quality check",data_management
+"Data integration needed",data_management
+"Data analysis required",data_management
+"User access request",user_management
+"User role update",user_management
+"User permission change",user_management
+"User account creation",user_management
+"User authentication issue",user_management
+"User password reset",user_management
+"User activity monitoring",user_management
+"User training needed",user_management
+"User compliance check",user_management
+"User security review",user_management
+"Report generation failed",reporting
+"Report template update",reporting
+"Report scheduling needed",reporting
+"Report distribution list",reporting
+"Report format change",reporting
+"Report data validation",reporting
+"Report automation needed",reporting
+"Report access control",reporting
+"Report compliance check",reporting
+"Report security review",reporting
+"Integration test needed",integration
+"API connection issue",integration
+"System integration update",integration
+"Integration documentation",integration
+"Integration monitoring",integration
+"Integration security check",integration
+"Integration performance",integration
+"Integration compliance",integration
+"Integration maintenance",integration
+"Integration support needed",integration
+"Security patch required",security
+"Security audit needed",security
+"Security policy update",security
+"Security compliance check",security
+"Security risk assessment",security
+"Security monitoring needed",security
+"Security documentation",security
+"Security training required",security
+"Security incident report",security
+"Security review needed",security
+"Performance optimization",performance
+"System performance issue",performance
+"Performance monitoring",performance
+"Performance testing needed",performance
+"Performance report generation",performance
+"Performance metrics update",performance
+"Performance improvement",performance
+"Performance documentation",performance
+"Performance review needed",performance
+"Performance optimization",performance
+"Backup verification needed",backup
+"Backup schedule update",backup
+"Backup storage check",backup
+"Backup recovery test",backup
+"Backup documentation",backup
+"Backup compliance check",backup
+"Backup security review",backup
+"Backup monitoring needed",backup
+"Backup maintenance",backup
+"Backup support required",backup
+"Training schedule update",training
+"Training material needed",training
+"Training session planning",training
+"Training documentation",training
+"Training compliance check",training
+"Training evaluation needed",training
+"Training feedback review",training
+"Training schedule conflict",training
+"Training resource allocation",training
+"Training support needed",training
+"Support ticket creation",support
+"Support request update",support
+"Support documentation",support
+"Support escalation needed",support
+"Support resolution update",support
+"Support feedback review",support
+"Support metrics update",support
+"Support training needed",support
+"Support compliance check",support
+"Support review required",support
+"Maintenance schedule update",maintenance
+"Maintenance documentation",maintenance
+"Maintenance compliance check",maintenance
+"Maintenance review needed",maintenance
+"Maintenance support required",maintenance
+"Maintenance monitoring",maintenance
+"Maintenance reporting",maintenance
+"Maintenance optimization",maintenance
+"Maintenance security check",maintenance
+"Maintenance training needed",maintenance 
